@@ -588,6 +588,13 @@
                     <li><strong>Время автономного висения:</strong> неограниченно (при стабильном реакторе)</li>
                     <li><strong>Защитное поле:</strong> кинетическое отклонение, 99.8% эффективности</li>
                 </ul>
+                <hr style="border-color: rgba(0,243,255,0.3); margin:20px 0;">
+                <p style="color:#00f3ff; margin-bottom: 10px;">[ МОДИФИКАЦИЯ КОРПУСА ]</p>
+                <div style="display:flex; align-items:center; gap: 15px;">
+                    <label for="carColorPicker" style="font-size: 14px;">Основной цвет полимеров:</label>
+                    <input type="color" id="carColorPicker" value="#ffffff" onchange="changeCarColor(this.value)" 
+                           style="background: transparent; border: 1px solid #00f3ff; cursor: pointer; height: 30px; border-radius: 4px;">
+                </div>
             `,
             'Сборка': `
                 <p>Протоколы сборки модуля:</p>
@@ -602,9 +609,9 @@
             'Чертежи': `
                 <p>Активируйте нейронное 3D-декодирование корпуса:</p>
                 <div style="display:flex; gap:10px; margin-top:15px; flex-wrap: wrap;">
-                    <button onclick="toggleBlueprintMode('wireframe')" style="padding:10px; background:rgba(0,243,255,0.1); border:1px solid #00f3ff; color:#fff; cursor:pointer; font-weight:bold;">Режим Сетки (Blueprint)</button>
-                    <button onclick="toggleBlueprintMode('xray')" style="padding:10px; background:rgba(0,243,255,0.1); border:1px solid #00f3ff; color:#fff; cursor:pointer; font-weight:bold;">Рентген (Полости)</button>
-                    <button onclick="toggleBlueprintMode('normal')" style="padding:10px; background:rgba(255,0,0,0.1); border:1px solid #ff4444; color:#fff; cursor:pointer; font-weight:bold;">Отключить сканер</button>
+                    <button onclick="toggleBlueprintMode('wireframe')" style="padding:10px; background:rgba(0,243,255,0.1); border:1px solid #00f3ff; color:#fff; cursor:pointer; font-weight:bold; border-radius:4px;">Режим Сетки (Blueprint)</button>
+                    <button onclick="toggleBlueprintMode('xray')" style="padding:10px; background:rgba(0,243,255,0.1); border:1px solid #00f3ff; color:#fff; cursor:pointer; font-weight:bold; border-radius:4px;">Рентген (Полости)</button>
+                    <button onclick="toggleBlueprintMode('normal')" style="padding:10px; background:rgba(255,0,0,0.1); border:1px solid #ff4444; color:#fff; cursor:pointer; font-weight:bold; border-radius:4px;">Отключить сканер</button>
                 </div>
                 <p style="margin-top: 15px; font-size: 13px; color: #00f3ff;">[ ИНСТРУКЦИЯ ]: Нажмите на режим, затем кликните за пределами окна, чтобы рассмотреть вращающуюся модель.</p>
             `,
@@ -739,6 +746,28 @@
                 statusText.style.color = '#00f3ff';
                 statusText.style.textShadow = '0 0 10px #00f3ff';
             }
+        }
+
+        // --- Изменение цвета корпуса ---
+        function changeCarColor(hexColor) {
+            if (!carModel) return;
+
+            carModel.traverse((child) => {
+                if (child.isMesh && child.userData.originalMaterial) {
+                    // Ищем материалы, которые похожи на "кузов". 
+                    // Стандартные материалы обычно не прозрачные и не источники света
+                    const mat = child.userData.originalMaterial;
+
+                    // Эвристика: если материал не черный, не прозрачный стекло-материал и не источник света
+                    if (mat.type === 'MeshStandardMaterial' || mat.type === 'MeshPhysicalMaterial') {
+                        mat.color.set(hexColor);
+                        // Обновляем и текущий материал, если мы не в режиме сканера
+                        if (child.material === mat) {
+                            child.material.color.set(hexColor);
+                        }
+                    }
+                }
+            });
         }
 
         // Запуск 3D после загрузки
