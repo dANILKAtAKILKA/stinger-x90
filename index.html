@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stinger X90 - Закрытый портал</title>
+    <!-- Three.js для 3D -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+    <style>
+        /* Базовые настройки и футуристичный фон */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: #050914;
+            background-image:
+                radial-gradient(circle at center, rgba(0, 243, 255, 0.1) 0%, transparent 60%),
+                linear-gradient(rgba(0, 243, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 243, 255, 0.03) 1px, transparent 1px);
+            background-size: 100% 100%, 40px 40px, 40px 40px;
+            color: #ffffff;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* Хедер */
+        header {
+            padding: 20px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(0, 243, 255, 0.2);
+            background: rgba(5, 9, 20, 0.8);
+            backdrop-filter: blur(10px);
+            z-index: 100;
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            text-shadow: 0 0 10px rgba(0, 243, 255, 0.5);
+        }
+
+        .logo span {
+            color: #00f3ff;
+        }
+
+        /* Основной контейнер */
+        .main-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-grow: 1;
+            padding: 0 5%;
+            position: relative;
+            z-index: 10;
+        }
+
+        /* Стеклянные панели (Glassmorphism) */
+        .glass-panel {
+            background: rgba(10, 20, 40, 0.6);
+            border: 1px solid rgba(0, 243, 255, 0.3);
+            border-radius: 15px;
+            padding: 30px;
+            backdrop-filter: blur(15px);
+            box-shadow: 0 0 20px rgba(0, 243, 255, 0.1), inset 0 0 20px rgba(0, 243, 255, 0.05);
+            width: 30%;
+            z-index: 10;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .glass-panel:hover {
+            box-shadow: 0 0 30px rgba(0, 243, 255, 0.2), inset 0 0 20px rgba(0, 243, 255, 0.1);
+        }
+
+        /* Левая панель - Описание */
+        .info-panel h2 {
+            color: #00f3ff;
+            margin-bottom: 15px;
+            font-size: 22px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            text-shadow: 0 0 10px rgba(0, 243, 255, 0.4);
+        }
+
+        .info-panel p {
+            color: #a0b0c0;
+            line-height: 1.6;
+            font-size: 15px;
+            margin-bottom: 10px;
+        }
+
+        /* Центральная зона - Интерактивное авто */
+        .center-stage {
+            width: 40%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        #canvas-container {
+            width: 100%;
+            height: 400px;
+            position: relative;
+            z-index: 5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: grab;
+        }
+
+        #canvas-container:active {
+            cursor: grabbing;
+        }
+
+        .halo {
+            position: absolute;
+            bottom: 20px;
+            width: 80%;
+            height: 20px;
+            background: radial-gradient(ellipse at center, rgba(0, 243, 255, 0.4) 0%, rgba(0, 0, 0, 0) 70%);
+            border-radius: 50%;
+            box-shadow: 0 10px 40px rgba(0, 243, 255, 0.5);
+            animation: pulse-halo 4s ease-in-out infinite;
+            z-index: 1;
+        }
+
+        @keyframes pulse-halo {
+            0% {
+                opacity: 0.5;
+                transform: scale(0.9);
+            }
+
+            50% {
+                opacity: 1;
+                transform: scale(1.1);
+            }
+
+            100% {
+                opacity: 0.5;
+                transform: scale(0.9);
+            }
+        }
+
+        .status-text {
+            color: #00f3ff;
+            font-size: 12px;
+            letter-spacing: 2px;
+            margin-top: -10px;
+            text-shadow: 0 0 8px rgba(0, 243, 255, 0.8);
+            z-index: 10;
+        }
+
+        /* Правая панель - Авторизация */
+        .login-panel h3 {
+            color: #fff;
+            margin-bottom: 20px;
+            font-size: 18px;
+            border-bottom: 1px solid rgba(0, 243, 255, 0.3);
+            padding-bottom: 10px;
+            text-shadow: 0 0 5px rgba(255, 255, 255, 0.3);
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        .input-group label {
+            display: block;
+            color: #00f3ff;
+            margin-bottom: 5px;
+            font-size: 14px;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 10px 15px;
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(0, 243, 255, 0.5);
+            color: #fff;
+            border-radius: 5px;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        .input-group input:focus {
+            border-color: #00f3ff;
+            box-shadow: 0 0 15px rgba(0, 243, 255, 0.5);
+        }
+
+        .login-btn {
+            width: 100%;
+            padding: 12px;
+            background: rgba(0, 243, 255, 0.1);
+            color: #00f3ff;
+            border: 1px solid #00f3ff;
+            border-radius: 5px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .login-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(0, 243, 255, 0.4), transparent);
+            transition: 0.5s;
+        }
+
+        .login-btn:hover {
+            background: #00f3ff;
+            color: #050914;
+            box-shadow: 0 0 20px #00f3ff;
+        }
+
+        .login-btn:hover::before {
+            left: 100%;
+        }
+
+        #login-message {
+            margin-top: 15px;
+            font-size: 14px;
+            text-align: center;
+            height: 20px;
+        }
+
+        /* Нижняя навигация */
+        .bottom-nav {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            padding: 30px;
+            background: linear-gradient(to top, rgba(5, 9, 20, 1) 20%, transparent);
+            z-index: 100;
+        }
+
+        .nav-btn {
+            padding: 15px 30px;
+            background: rgba(10, 20, 40, 0.8);
+            border: 1px solid rgba(0, 243, 255, 0.2);
+            color: rgba(255, 255, 255, 0.4);
+            border-radius: 8px;
+            cursor: not-allowed;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .nav-btn.unlocked {
+            color: #00f3ff;
+            border-color: #00f3ff;
+            cursor: pointer;
+            background: rgba(0, 243, 255, 0.05);
+        }
+
+        .nav-btn.unlocked:hover {
+            background: rgba(0, 243, 255, 0.15);
+            box-shadow: 0 0 20px rgba(0, 243, 255, 0.5);
+            transform: translateY(-3px);
+            text-shadow: 0 0 5px rgba(0, 243, 255, 0.8);
+        }
+
+        /* Модальные окна */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(8px);
+            z-index: 1000;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+            opacity: 1;
+        }
+
+        .modal-content {
+            background: rgba(10, 20, 40, 0.9);
+            border: 1px solid #00f3ff;
+            box-shadow: 0 0 30px rgba(0, 243, 255, 0.3);
+            border-radius: 15px;
+            padding: 40px;
+            width: 60%;
+            max-width: 800px;
+            position: relative;
+            transform: scale(0.9);
+            transition: transform 0.3s ease;
+            color: #fff;
+        }
+
+        .modal-overlay.active .modal-content {
+            transform: scale(1);
+        }
+
+        .close-modal {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            color: #00f3ff;
+            font-size: 24px;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .close-modal:hover {
+            color: #fff;
+            text-shadow: 0 0 10px #00f3ff;
+            transform: rotate(90deg);
+        }
+
+        .modal-header {
+            font-size: 24px;
+            color: #00f3ff;
+            margin-bottom: 20px;
+            border-bottom: 1px solid rgba(0, 243, 255, 0.3);
+            padding-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .modal-body {
+            color: #a0b0c0;
+            line-height: 1.8;
+            font-size: 16px;
+        }
+
+        .modal-body ul {
+            list-style: none;
+            margin-top: 15px;
+        }
+
+        .modal-body li {
+            margin-bottom: 10px;
+            padding-left: 20px;
+            position: relative;
+            color: #fff;
+        }
+
+        .modal-body li::before {
+            content: '▹';
+            position: absolute;
+            left: 0;
+            color: #00f3ff;
+        }
+    </style>
+</head>
+
+<body>
+
+    <header>
+        <div class="logo">Stinger <span>X90</span></div>
+        <div style="color: #00f3ff; font-size: 14px; text-shadow: 0 0 5px rgba(0,243,255,0.5);">Система управления
+            AGM-V7 v3.0</div>
+    </header>
+
+    <div class="main-container">
+
+        <div class="glass-panel info-panel">
+            <h2>Модуль антигравитации</h2>
+            <p><strong>Поколение:</strong> AGM-V7</p>
+            <p>Добро пожаловать в закрытую систему. Stinger X90 использует революционную подсистему <em>Gravity
+                    Nullification Array (GNA)</em>, манипулирующую пространственно-временными полями.</p>
+            <p>Достигнуто безфрикционное движение на любом ландшафте, 360-градусное векторирование и мгновенное
+                маневрирование без перегрузок.</p>
+            <p style="margin-top:20px; color:#00f3ff; font-size: 12px;">Требуется авторизация для доступа к телеметрии.
+            </p>
+        </div>
+
+        <div class="center-stage">
+            <div id="canvas-container"></div>
+            <div class="halo"></div>
+            <p class="status-text">[ СТАТУС ЛЕВИТАЦИИ: ОЖИДАНИЕ АВТОРИЗАЦИИ ]</p>
+        </div>
+
+        <div class="glass-panel login-panel">
+            <h3>ВХОД ДЛЯ ИНЖЕНЕРОВ</h3>
+            <div class="input-group">
+                <label>Логин протокола</label>
+                <input type="text" id="username" placeholder="danil90" value="danil90">
+            </div>
+            <div class="input-group">
+                <label>Ключ доступа (x90)</label>
+                <input type="password" id="password" placeholder="•••••••">
+            </div>
+            <button class="login-btn" onclick="checkLogin()">Инициализация</button>
+            <div id="login-message"></div>
+        </div>
+
+    </div>
+
+    <div class="bottom-nav">
+        <button class="nav-btn" onclick="openModal('Характеристики')">Спецификации</button>
+        <button class="nav-btn" onclick="openModal('Сборка')">Сборка GNA</button>
+        <button class="nav-btn" onclick="openModal('Чертежи')">3D Чертежи</button>
+        <button class="nav-btn" onclick="openModal('Данные испытаний')">Телеметрия</button>
+    </div>
+
+    <!-- Модальное окно -->
+    <div class="modal-overlay" id="sys-modal" onclick="closeModal(event)">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <span class="close-modal" onclick="closeModal(event, true)">×</span>
+            <div class="modal-header" id="modal-title">Заголовок</div>
+            <div class="modal-body" id="modal-body">
+                Текст контента...
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- 3D Графика (Three.js) ---
+        let scene, camera, renderer, carModel, particles;
+        let isAuthorized = false;
+
+        function init3D() {
+            const container = document.getElementById('canvas-container');
+            scene = new THREE.Scene();
+
+            camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 1000);
+            camera.position.z = 10;
+            camera.position.y = 2;
+
+            renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+            renderer.setSize(container.clientWidth, container.clientHeight);
+            container.appendChild(renderer.domElement);
+
+            // Создаем детализированный футуристичный гипер-кар
+            const carGroup = new THREE.Group();
+            carModel = carGroup;
+            carModel.engines = [];
+
+            // Добавляем освещение
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+            scene.add(ambientLight);
+
+            const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            dirLight.position.set(5, 10, 7);
+            scene.add(dirLight);
+
+            // Загрузка реальной 3D-модели автомобиля
+            carModel = new THREE.Group();
+            carModel.engines = []; // Оставляем пустой массив, чтобы не сломать код вращения двигателей
+            scene.add(carModel);
+
+            const loader = new THREE.GLTFLoader();
+            loader.load('car.glb', function (gltf) {
+                const loadedModel = gltf.scene;
+
+                // Настраиваем масштаб и позицию загруженной модели под нашу сцену
+                // Если машина огромная или мелкая - меняем масштаб здесь
+                loadedModel.scale.set(1.5, 1.5, 1.5);
+                loadedModel.position.set(0, -0.5, 0);
+
+                // Не перекрашиваем всю машину целиком, чтобы сохранить оригинальные текстуры (стекла, шины, салон)
+                // Но усиливаем их свойства, чтобы они лучше реагировали на свет из сцены
+                loadedModel.traverse((child) => {
+                    if (child.isMesh && child.material) {
+                        // Сохраняем оригинальный материал для работы сканера/чертежей
+                        child.userData.originalMaterial = child.material;
+
+                        // Если в модели есть emissive (светящиеся части), можем усилить их
+                        if (child.material.emissive) {
+                            child.material.emissiveIntensity = 2.0;
+                        }
+                    }
+                });
+                carModel.add(loadedModel);
+
+                // Добавляем внутреннее свечение для авторизации
+                const ambientGlow = new THREE.PointLight(0x00f3ff, 2, 8);
+                ambientGlow.position.set(0, 0.5, 0);
+                carModel.add(ambientGlow);
+
+            }, undefined, function (error) {
+                console.error('Ошибка загрузки модели car.glb:', error);
+                document.querySelector('.status-text').innerHTML = '[ ОШИБКА: car.glb НЕ НАЙДЕН В ПАПКЕ ]';
+                document.querySelector('.status-text').style.color = '#ff4444';
+            });
+
+            // Частицы "энергии"
+            const partGeo = new THREE.BufferGeometry();
+            const partCount = 200;
+            const partPos = new Float32Array(partCount * 3);
+            for (let i = 0; i < partCount * 3; i++) {
+                partPos[i] = (Math.random() - 0.5) * 10;
+            }
+            partGeo.setAttribute('position', new THREE.BufferAttribute(partPos, 3));
+            const partMat = new THREE.PointsMaterial({
+                color: 0x00f3ff,
+                size: 0.05,
+                transparent: true,
+                opacity: 0.3
+            });
+            particles = new THREE.Points(partGeo, partMat);
+            scene.add(particles);
+
+            // Обработка мыши для вращения
+            let isDragging = false;
+            let previousMousePosition = { x: 0, y: 0 };
+
+            container.addEventListener('mousedown', () => isDragging = true);
+            window.addEventListener('mouseup', () => isDragging = false);
+            window.addEventListener('mousemove', (e) => {
+                if (isDragging) {
+                    const deltaMove = {
+                        x: e.offsetX - previousMousePosition.x,
+                        y: e.offsetY - previousMousePosition.y
+                    };
+                    carModel.rotation.y += deltaMove.x * 0.01;
+                    carModel.rotation.x += deltaMove.y * 0.01;
+                }
+                previousMousePosition = { x: e.offsetX, y: e.offsetY };
+            });
+
+            animate3D();
+        }
+
+        function animate3D() {
+            requestAnimationFrame(animate3D);
+            if (carModel) {
+                // Плавное парение
+                carModel.position.y = Math.sin(Date.now() * 0.002) * 0.2;
+                if (!isAuthorized) {
+                    carModel.rotation.y += 0.005; // Медленное вращение
+                } else {
+                    carModel.rotation.y += 0.015; // Ускоренное вращение после входа
+
+                    // Эффект двигателей (вращение внутренних колец антигравов)
+                    if (carModel.engines) {
+                        carModel.engines.forEach(engine => {
+                            engine.rotation.z += 0.1;
+                        });
+                    }
+                }
+            }
+
+            if (particles) {
+                particles.rotation.y -= 0.002;
+                if (isAuthorized) {
+                    particles.material.opacity = Math.abs(Math.sin(Date.now() * 0.003)) * 0.8;
+                }
+            }
+
+            renderer.render(scene, camera);
+        }
+
+        // --- Логика интерфейса ---
+
+        const contentData = {
+            'Характеристики': `
+                <p>Основные технические данные узла AGM-V7:</p>
+                <ul>
+                    <li><strong>Тяга GNA:</strong> 450 кН на каждый излучатель</li>
+                    <li><strong>Энергопотребление:</strong> 12.4 ТВт (импульсно)</li>
+                    <li><strong>Критическая температура ядра:</strong> 2 400 K</li>
+                    <li><strong>Время автономного висения:</strong> неограниченно (при стабильном реакторе)</li>
+                    <li><strong>Защитное поле:</strong> кинетическое отклонение, 99.8% эффективности</li>
+                </ul>
+            `,
+            'Сборка': `
+                <p>Протоколы сборки модуля:</p>
+                <ul>
+                    <li>Шаг 1: Интеграция квантового сверхпроводника в шасси</li>
+                    <li>Шаг 2: Центровка поляризаторов гравитации</li>
+                    <li>Шаг 3: Калибровка нейро-интерфейса пилота</li>
+                    <li>Шаг 4: Тестовый пуск реактора на 5% мощности</li>
+                </ul>
+                <p style="color:#ffae00; margin-top:10px;">ВНИМАНИЕ: Сборка допускается только в свинцовом ангаре B-12.</p>
+            `,
+            'Чертежи': `
+                <p>Активируйте нейронное 3D-декодирование корпуса:</p>
+                <div style="display:flex; gap:10px; margin-top:15px; flex-wrap: wrap;">
+                    <button onclick="toggleBlueprintMode('wireframe')" style="padding:10px; background:rgba(0,243,255,0.1); border:1px solid #00f3ff; color:#fff; cursor:pointer; font-weight:bold;">Режим Сетки (Blueprint)</button>
+                    <button onclick="toggleBlueprintMode('xray')" style="padding:10px; background:rgba(0,243,255,0.1); border:1px solid #00f3ff; color:#fff; cursor:pointer; font-weight:bold;">Рентген (Полости)</button>
+                    <button onclick="toggleBlueprintMode('normal')" style="padding:10px; background:rgba(255,0,0,0.1); border:1px solid #ff4444; color:#fff; cursor:pointer; font-weight:bold;">Отключить сканер</button>
+                </div>
+                <p style="margin-top: 15px; font-size: 13px; color: #00f3ff;">[ ИНСТРУКЦИЯ ]: Нажмите на режим, затем кликните за пределами окна, чтобы рассмотреть вращающуюся модель.</p>
+            `,
+            'Данные испытаний': `
+                <p>Последняя телеметрия (Тест #4092):</p>
+                <ul style="color:#00ffaa;">
+                    <li>Стабильность зависания: 99.9%</li>
+                    <li>Отклонение ветром (ураганная сила): 0.001 мм</li>
+                    <li>Снижение массы: 100.0% компенсировано</li>
+                    <li>Состояние перегрузок пилота при 15G: 1.1G (защита активна)</li>
+                </ul>
+                <p>Статус проекта: ГОТОВ К ПОЛЕВЫМ ИСПЫТАНИЯМ.</p>
+            `
+        };
+
+        function checkLogin() {
+            const user = document.getElementById('username').value;
+            const pass = document.getElementById('password').value;
+            const messageBox = document.getElementById('login-message');
+
+            if (user === 'danil90' && pass === 'x90') {
+                isAuthorized = true;
+                messageBox.style.color = '#00ffaa';
+                messageBox.innerHTML = 'Доступ разрешен. Генерирую поле...';
+
+                // Добавляем свечение-ауру изнутри
+                carModel.traverse((child) => {
+                    // Для внешних моделей ищем светящиеся части или просто меняем общий свет
+                    if (child.isMesh && child.material) {
+                        if (child.material.emissive && child.material.emissiveIntensity > 0) {
+                            child.material.emissive.setHex(0x00ffaa);
+                            child.material.emissiveIntensity = 5.0;
+                        } else if (child.material.type === 'MeshBasicMaterial' && child.material.color.getHex() !== 0xff0000) {
+                            child.material.color.setHex(0x00ffaa);
+                        }
+                    }
+                    if (child.isPointLight) {
+                        child.color.setHex(0x00ffaa);
+                        child.intensity = 4; // Увеличиваем яркость
+                    }
+                });
+
+                document.querySelector('.status-text').innerHTML = '[ СТАТУС ЛЕВИТАЦИИ: АКТИВНЫЙ РЕЖИМ ]';
+                document.querySelector('.status-text').style.color = '#00ffaa';
+
+                // Разблокируем кнопки
+                const buttons = document.querySelectorAll('.nav-btn');
+                buttons.forEach(btn => btn.classList.add('unlocked'));
+
+                // Эффект ухода панели
+                setTimeout(() => {
+                    const loginPanel = document.querySelector('.login-panel');
+                    loginPanel.innerHTML = `
+                        <h3 style="color: #00ffaa; border-color: #00ffaa;">ДОСТУП ОТКРЫТ</h3>
+                        <p style="color: #fff; margin-bottom: 10px;">Главный Инженер: <br><strong style="font-size: 20px;">danil90</strong></p>
+                        <hr style="border-color: rgba(0,243,255,0.3); margin:15px 0;">
+                        <p style="color: #a0b0c0; font-size: 14px;">Системы готовы к работе. Выберите нужный модуль в панели навигации.</p>
+                        <div style="margin-top:20px; text-align:center; color:#00f3ff;">
+                            <span style="display:inline-block; animation: pulse-halo 2s infinite;">● СОЕДИНЕНИЕ ЗАЩИЩЕНО</span>
+                        </div>
+                    `;
+                }, 1500);
+
+            } else {
+                messageBox.style.color = '#ff4444';
+                messageBox.innerHTML = 'НЕТ ДОСТУПА. Повторите попытку.';
+            }
+        }
+
+        function openModal(section) {
+            if (!isAuthorized) {
+                const messageBox = document.getElementById('login-message');
+                messageBox.style.color = '#ff4444';
+                messageBox.innerHTML = 'Сначала пройдите авторизацию!';
+                return;
+            }
+
+            const modal = document.getElementById('sys-modal');
+            const title = document.getElementById('modal-title');
+            const body = document.getElementById('modal-body');
+
+            title.innerText = 'РАЗДЕЛ: ' + section;
+            body.innerHTML = contentData[section] || 'Данные отсутствуют.';
+
+            modal.classList.add('active');
+        }
+
+        function closeModal(event, force = false) {
+            if (force || event.target.id === 'sys-modal') {
+                document.getElementById('sys-modal').classList.remove('active');
+            }
+        }
+
+        // --- Управление режимами чертежей ---
+        function toggleBlueprintMode(mode) {
+            if (!carModel) return;
+
+            carModel.traverse((child) => {
+                if (child.isMesh && child.userData.originalMaterial) {
+                    if (mode === 'wireframe') {
+                        // Полигональная неоновая сетка (Wireframe Blueprint)
+                        child.material = new THREE.MeshBasicMaterial({
+                            color: 0x00f3ff,
+                            wireframe: true,
+                            transparent: true,
+                            opacity: 0.2
+                        });
+                    } else if (mode === 'xray') {
+                        // Прозрачный голографический рентген (X-Ray)
+                        child.material = new THREE.MeshStandardMaterial({
+                            color: 0x00f3ff,
+                            emissive: 0x0022aa,
+                            transparent: true,
+                            opacity: 0.15,
+                            wireframe: false,
+                            depthWrite: false
+                        });
+                    } else {
+                        // Возврат к стандартному сохраненному материалу (Normal)
+                        child.material = child.userData.originalMaterial;
+                    }
+                }
+            });
+
+            // Обновляем статус на главном экране
+            const statusText = document.querySelector('.status-text');
+            if (mode === 'normal') {
+                statusText.innerHTML = isAuthorized ? '[ СТАТУС ЛЕВИТАЦИИ: АКТИВНЫЙ РЕЖИМ ]' : '[ СТАТУС ЛЕВИТАЦИИ: ОЖИДАНИЕ АВТОРИЗАЦИИ ]';
+                statusText.style.color = isAuthorized ? '#00ffaa' : '#00f3ff';
+            } else {
+                statusText.innerHTML = `[ АКТИВЕН 3D-СКАНЕР: ${mode.toUpperCase()} ]`;
+                statusText.style.color = '#00f3ff';
+                statusText.style.textShadow = '0 0 10px #00f3ff';
+            }
+        }
+
+        // Запуск 3D после загрузки
+        window.onload = init3D;
+
+        // Ресайз окна
+        window.addEventListener('resize', () => {
+            const container = document.getElementById('canvas-container');
+            if (camera && renderer) {
+                camera.aspect = container.clientWidth / container.clientHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(container.clientWidth, container.clientHeight);
+            }
+        });
+
+    </script>
+</body>
+
+</html>
