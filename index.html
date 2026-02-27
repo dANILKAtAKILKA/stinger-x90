@@ -754,16 +754,39 @@
 
             carModel.traverse((child) => {
                 if (child.isMesh && child.userData.originalMaterial) {
-                    // Ищем материалы, которые похожи на "кузов". 
-                    // Стандартные материалы обычно не прозрачные и не источники света
                     const mat = child.userData.originalMaterial;
 
-                    // Эвристика: если материал не черный, не прозрачный стекло-материал и не источник света
-                    if (mat.type === 'MeshStandardMaterial' || mat.type === 'MeshPhysicalMaterial') {
-                        mat.color.set(hexColor);
-                        // Обновляем и текущий материал, если мы не в режиме сканера
-                        if (child.material === mat) {
-                            child.material.color.set(hexColor);
+                    // Умная эвристика для поиска "краски кузова" (car paint).
+                    // Мы не хотим красить:
+                    // 1. Стекла (transparent: true, transmission > 0)
+                    // 2. Черные детали (шины, пластик, салон) - их исходный цвет обычно очень темный.
+                    // 3. Хром / металл без краски (metalness > 0.8)
+
+                    const isStandardOrPhysical = (mat.type === 'MeshStandardMaterial' || mat.type === 'MeshPhysicalMaterial');
+                    const isNotTransparent = !mat.transparent && (!mat.transmission || mat.transmission === 0);
+
+                    if (isStandardOrPhysical && isNotTransparent) {
+
+                        // Сохраняем исходный цвет в userData, если мы его еще не сохраняли
+                        if (!mat.userData.originalHexColor) {
+                            mat.userData.originalHexColor = mat.color.getHex();
+                        }
+
+                        // Получаем цвет (RGB). Если цвет темный (ниже ~40-50 RGB), это скорее всего шины/черный салон/решетка радиатора.
+                        // Оригинальный кузов Duck.glb белый (0xffffff), а у других машин кузов обычно ярче черного пластика.
+                        const origColor = mat.userData.originalHexColor;
+                        const r = (origColor >> 16) & 255;
+                        const g = (origColor >> 8) & 255;
+                        const b = origColor & 255;
+
+                        // Если цвет светлее темно-серого (и не является чистым металлом)
+                        if ((r > 50 || g > 50 || b > 50) && (!mat.metalness || mat.metalness < 0.9)) {
+                            mat.color.set(hexColor);
+
+                            // Обновляем и текущий материал, если мы не в режиме сканера-чертежей
+                            if (child.material === mat) {
+                                child.material.color.set(hexColor);
+                            }
                         }
                     }
                 }
