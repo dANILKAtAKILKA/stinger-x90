@@ -422,7 +422,7 @@
     </div>
 
     <div class="bottom-nav">
-        <button class="nav-btn" onclick="openModal('Характеристики')">Спецификации</button>
+        <button class="nav-btn unlocked" onclick="openModal('Характеристики')">Спецификации</button>
         <button class="nav-btn" onclick="openModal('Сборка')">Сборка GNA</button>
         <button class="nav-btn" onclick="openModal('Чертежи')">3D Чертежи</button>
         <button class="nav-btn" onclick="openModal('Данные испытаний')">Телеметрия</button>
@@ -682,7 +682,7 @@
         }
 
         function openModal(section) {
-            if (!isAuthorized) {
+            if (!isAuthorized && section !== 'Характеристики') {
                 const messageBox = document.getElementById('login-message');
                 messageBox.style.color = '#ff4444';
                 messageBox.innerHTML = 'Сначала пройдите авторизацию!';
